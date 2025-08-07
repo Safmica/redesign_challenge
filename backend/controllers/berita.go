@@ -13,6 +13,7 @@ import (
 
 func GetBerita(c *fiber.Ctx) error {
 	isPriority := c.Query("is_priority")
+	limit := c.Query("limit")
 	cacheKey := "berita_all"
 
 	if isPriority == "true" {
@@ -30,6 +31,11 @@ func GetBerita(c *fiber.Ctx) error {
 	query := database.DB.Model(&models.Berita{}).Where("posted_at <= ?", time.Now())
 	if isPriority == "true" {
 		query = query.Where("is_priority = ?", true)
+	}
+	if limit != "" {
+		if limitInt, err := strconv.Atoi(limit); err == nil {
+			query = query.Limit(limitInt)
+		}
 	}
 	if err := query.Find(&berita).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
