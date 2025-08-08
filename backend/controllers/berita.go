@@ -28,7 +28,7 @@ func GetBerita(c *fiber.Ctx) error {
 	}
 
 	var berita []models.Berita
-	query := database.DB.Model(&models.Berita{}).Where("posted_at <= ?", time.Now())
+	query := database.DB.Model(&models.Berita{}).Where("posted_at <= ?", time.Now()).Order("posted_at DESC")
 	if isPriority == "true" {
 		query = query.Where("is_priority = ?", true)
 	}
@@ -71,6 +71,16 @@ func CreateBerita(c *fiber.Ctx) error {
 	isPriority, err := strconv.ParseBool(isPriorityStr)
 	if err != nil {
 		isPriority = false
+	}
+
+	if postedAtStr := c.FormValue("posted_at"); postedAtStr != "" {
+		t, err := time.Parse(time.RFC3339, postedAtStr)
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{
+				"error": "Invalid posted_at format. Use ISO 8601 (RFC3339)",
+			})
+		}
+		berita.PostedAt = t
 	}
 
 	berita.Judul = judul
